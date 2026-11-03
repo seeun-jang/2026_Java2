@@ -3,161 +3,114 @@ package ai1103;
 
 import center.SetFrame;
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.*;
+import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
 public class MenuTest extends JFrame implements MouseListener {
 
-    private JTextArea textArea;
-    private JLabel statusLabel;
-    private MenuStyle.NoteCard noteCard;
+    private final MenuStyle style = new MenuStyle();
+    private final JTextArea textArea = style.textArea;
+    private File currentFile;
 
     public MenuTest() {
-        setLayout(new BorderLayout());
+        setContentPane(style);
+        textArea.addMouseListener(this);
 
-        // =========================
-        // 1. 메뉴 구성
-        // =========================
-        JMenuBar menuBar = MenuStyle.menuBar();
-        setJMenuBar(menuBar);
-
-        JMenu fileMenu = MenuStyle.menu("File");
-        JMenu editMenu = MenuStyle.menu("Edit");
+        JMenuBar menuBar = new JMenuBar();
+        JMenu fileMenu = new JMenu("File");
+        JMenu themeMenu = new JMenu("Theme");
 
         menuBar.add(fileMenu);
-        menuBar.add(editMenu);
+        menuBar.add(themeMenu);
+        setJMenuBar(menuBar);
 
-        JMenuItem newItem = MenuStyle.item("New");
-        JMenuItem openItem = MenuStyle.item("Open");
-        JMenuItem clearItem = MenuStyle.item("Clear");
-        JMenuItem closeItem = MenuStyle.item("Close");
-
-        fileMenu.add(newItem);
-        fileMenu.add(openItem);
-        fileMenu.add(clearItem);
-        fileMenu.addSeparator();
-        fileMenu.add(closeItem);
-
-        JMenuItem mintItem = MenuStyle.item("Mint");
-        JMenuItem pinkItem = MenuStyle.item("Pink");
-        JMenuItem creamItem = MenuStyle.item("Cream");
-
-        editMenu.add(mintItem);
-        editMenu.add(pinkItem);
-        editMenu.add(creamItem);
-
-        // =========================
-        // 2. 화면 배치
-        // =========================
-        JPanel mainPanel = MenuStyle.mainPanel();
-        add(mainPanel, BorderLayout.CENTER);
-
-        mainPanel.add(
-                MenuStyle.headerPanel(),
-                BorderLayout.NORTH
-        );
-
-        textArea = MenuStyle.textArea();
-        noteCard = new MenuStyle.NoteCard(textArea);
-
-        mainPanel.add(noteCard, BorderLayout.CENTER);
-
-        statusLabel = MenuStyle.statusLabel(
-                "A little note for today"
-        );
-
-        JButton clearButton = MenuStyle.clearButton();
-
-        mainPanel.add(
-                MenuStyle.footerPanel(statusLabel, clearButton),
-                BorderLayout.SOUTH
-        );
-
-        // =========================
-        // 3. ActionListener
-        // =========================
-        ActionListener backgroundListener = new ActionListener() {
+        // File 메뉴와 툴바가 같은 리스너 사용
+        ActionListener fileListener = new ActionListener() {
 
             @Override
             public void actionPerformed(ActionEvent e) {
 
-                Color color = null;
-
                 switch (e.getActionCommand()) {
-
-                    case "Mint":
-                        color = MenuStyle.PASTEL_MINT;
+                    case "New":
+                        textArea.setText("");
+                        currentFile = null;
+                        style.setTheme("Mint");
                         break;
 
-                    case "Pink":
-                        color = MenuStyle.PASTEL_PINK;
+                    case "Open":
+                        openFile();
                         break;
 
-                    case "Cream":
-                        color = MenuStyle.PASTEL_CREAM;
+                    case "Save":
+                        saveFile();
                         break;
-                }
 
-                if (color != null) {
-                    noteCard.setPaperColor(color);
-                    statusLabel.setText(
-                            "Paper color: " + e.getActionCommand()
-                    );
+                    case "Clear":
+                        textArea.setText("");
+                        style.status.setText("메모를 지웠습니다.");
+                        break;
+
+                    case "Close":
+                        dispose();
+                        break;
                 }
             }
         };
 
-        // 배경색 리스너 등록
-        mintItem.addActionListener(backgroundListener);
-        pinkItem.addActionListener(backgroundListener);
-        creamItem.addActionListener(backgroundListener);
+        // 교수님 방식: ActionListener + switch-case
+        ActionListener themeListener = new ActionListener() {
 
-        // =========================
-        // 4. 메모 관리
-        // =========================
+            @Override
+            public void actionPerformed(ActionEvent e) {
 
-        // 전체 내용 삭제
-        ActionListener clearListener = e -> {
-            textArea.setText("");
-            statusLabel.setText("Memo cleared");
-            textArea.requestFocusInWindow();
+                switch (e.getActionCommand()) {
+                    case "Mint":
+                        style.setTheme("Mint");
+                        break;
+
+                    case "Pink":
+                        style.setTheme("Pink");
+                        break;
+
+                    case "Snow":
+                        style.setTheme("Snow");
+                        break;
+                }
+            }
         };
 
-        clearItem.addActionListener(clearListener);
-        clearButton.addActionListener(clearListener);
+        // 메뉴 등록
+        addItem(fileMenu, "New", fileListener);
+        addItem(fileMenu, "Open", fileListener);
+        addItem(fileMenu, "Save", fileListener);
+        addItem(fileMenu, "Clear", fileListener);
+        fileMenu.addSeparator();
+        addItem(fileMenu, "Close", fileListener);
 
-        // 새 메모 생성
-        newItem.addActionListener(e -> {
-            textArea.setText("");
-            noteCard.setPaperColor(MenuStyle.PASTEL_CREAM);
-            statusLabel.setText("New memo");
-            textArea.requestFocusInWindow();
-        });
+        addItem(themeMenu, "Mint", themeListener);
+        addItem(themeMenu, "Pink", themeListener);
+        addItem(themeMenu, "Snow", themeListener);
 
-        // 파일 열기
-        openItem.addActionListener(e -> openFile());
+        // 툴바에도 리스너 연결
+        style.addToolbar(fileListener, themeListener);
 
-        // 종료
-        closeItem.addActionListener(e -> dispose());
-
-        // =========================
-        // 5. MouseListener 등록
-        // =========================
-        textArea.addMouseListener(this);
-
-        SetFrame.setFrame(
-                this, "Christmas Memo", 620, 720
-        );
-
-        setMinimumSize(new Dimension(510, 600));
+        SetFrame.setFrame(this, "Christmas Memo", 660, 720);
+        setMinimumSize(new java.awt.Dimension(570, 630));
         setLocationRelativeTo(null);
     }
 
-    // =========================
+    // 메뉴 항목 추가
+    private void addItem(JMenu menu, String name,
+                         ActionListener listener) {
+
+        JMenuItem item = new JMenuItem(name);
+        item.addActionListener(listener);
+        menu.add(item);
+    }
+
     // 파일 열기
-    // =========================
     private void openFile() {
 
         JFileChooser chooser = new JFileChooser();
@@ -166,16 +119,17 @@ public class MenuTest extends JFrame implements MouseListener {
                 == JFileChooser.APPROVE_OPTION) {
 
             try {
-                String contents = Files.readString(
-                        chooser.getSelectedFile().toPath(),
-                        StandardCharsets.UTF_8
+                File file = chooser.getSelectedFile();
+
+                textArea.setText(
+                        Files.readString(
+                                file.toPath(),
+                                StandardCharsets.UTF_8
+                        )
                 );
 
-                textArea.setText(contents);
-
-                statusLabel.setText(
-                        "Opened: " + chooser.getSelectedFile().getName()
-                );
+                currentFile = file;
+                style.status.setText("열기: " + file.getName());
 
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(
@@ -185,41 +139,73 @@ public class MenuTest extends JFrame implements MouseListener {
         }
     }
 
-    // =========================
+    // 파일 저장
+    private void saveFile() {
+
+        File file = currentFile;
+
+        if (file == null) {
+            JFileChooser chooser = new JFileChooser();
+
+            if (chooser.showSaveDialog(this)
+                    != JFileChooser.APPROVE_OPTION) {
+                return;
+            }
+
+            file = chooser.getSelectedFile();
+
+            if (!file.getName().toLowerCase().endsWith(".txt")) {
+                file = new File(file.getPath() + ".txt");
+            }
+
+            if (file.exists() &&
+                    JOptionPane.showConfirmDialog(
+                            this,
+                            "기존 파일을 덮어쓸까요?",
+                            "저장 확인",
+                            JOptionPane.YES_NO_OPTION
+                    ) != JOptionPane.YES_OPTION) {
+                return;
+            }
+        }
+
+        try {
+            Files.writeString(
+                    file.toPath(),
+                    textArea.getText(),
+                    StandardCharsets.UTF_8
+            );
+
+            currentFile = file;
+            style.status.setText("저장: " + file.getName());
+
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(
+                    this, "파일을 저장할 수 없습니다."
+            );
+        }
+    }
+
     // MouseListener
-    // =========================
     @Override
     public void mouseClicked(MouseEvent e) {
-        statusLabel.setText(
-                "Clicked: " + e.getX() + ", " + e.getY()
+        style.status.setText(
+                "메모 영역 클릭: " + e.getX() + ", " + e.getY()
         );
     }
 
     @Override
-    public void mouseEntered(MouseEvent e) {
-        statusLabel.setText(
-                "Write your little Christmas note"
-        );
-    }
+    public void mouseEntered(MouseEvent e) {}
 
     @Override
-    public void mouseExited(MouseEvent e) {
-        statusLabel.setText(
-                "A little note for today"
-        );
-    }
+    public void mouseExited(MouseEvent e) {}
 
     @Override
-    public void mousePressed(MouseEvent e) {
-    }
+    public void mousePressed(MouseEvent e) {}
 
     @Override
-    public void mouseReleased(MouseEvent e) {
-    }
+    public void mouseReleased(MouseEvent e) {}
 
-    // =========================
-    // Main
-    // =========================
     public static void main(String[] args) {
         SwingUtilities.invokeLater(MenuTest::new);
     }
