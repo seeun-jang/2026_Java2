@@ -12,28 +12,28 @@ public class MenuStyle extends JPanel {
     public final NoteArea textArea = new NoteArea();
     public final JLabel status = new JLabel("Ready");
 
-    private final JLabel title = new JLabel(
-            "Merry Little Notes", SwingConstants.CENTER
-    );
+    private final JLabel title =
+            new JLabel("Merry Little Notes", SwingConstants.CENTER);
 
-    private final JLabel subtitle = new JLabel(
-            "♡ CHRISTMAS NOTE ♡", SwingConstants.CENTER
-    );
+    private final JLabel subtitle =
+            new JLabel("♡ CHRISTMAS NOTE ♡", SwingConstants.CENTER);
 
     private final JToolBar toolbar = new JToolBar();
     private final NoteCard card = new NoteCard();
+    private final JScrollPane scroll = new JScrollPane(textArea);
 
+    // 기본 색상
     private Color frame = new Color(159, 208, 165);
     private Color paper = new Color(255, 252, 245);
     private Color ribbon = new Color(244, 173, 196);
     private Color ink = new Color(80, 116, 87);
 
     public MenuStyle() {
-        super(new BorderLayout(0, 14));
 
+        setLayout(new BorderLayout(0, 14));
         setBorder(new EmptyBorder(17, 24, 15, 24));
 
-        // 제목
+        // 상단 제목
         JPanel top = new JPanel(new BorderLayout(0, 10));
         top.setOpaque(false);
 
@@ -45,33 +45,33 @@ public class MenuStyle extends JPanel {
 
         heading.add(title, BorderLayout.NORTH);
         heading.add(subtitle, BorderLayout.SOUTH);
-        top.add(heading, BorderLayout.NORTH);
 
         // 툴바
         toolbar.setFloatable(false);
-        toolbar.setBackground(Color.WHITE);
-        toolbar.setBorder(new EmptyBorder(5, 8, 5, 8));
+        toolbar.setBackground(new Color(255, 255, 255));
+        toolbar.setBorder(new EmptyBorder(7, 7, 7, 7));
 
+        top.add(heading, BorderLayout.NORTH);
         top.add(toolbar, BorderLayout.SOUTH);
+
         add(top, BorderLayout.NORTH);
 
-        // 메모장
+        // 메모 영역
         textArea.setFont(new Font("Dialog", Font.PLAIN, 16));
         textArea.setMargin(new Insets(12, 12, 12, 12));
         textArea.setLineWrap(true);
         textArea.setWrapStyleWord(true);
         textArea.setOpaque(false);
 
-        card.setBorder(new EmptyBorder(122, 84, 90, 84));
-        card.setLayout(new BorderLayout());
-
-        JScrollPane scroll = new JScrollPane(textArea);
         scroll.setBorder(BorderFactory.createEmptyBorder());
 
+        card.setLayout(new BorderLayout());
+        card.setBorder(new EmptyBorder(122, 84, 90, 84));
         card.add(scroll, BorderLayout.CENTER);
+
         add(card, BorderLayout.CENTER);
 
-        // 상태 라벨
+        // 상태 표시
         status.setFont(new Font("Dialog", Font.PLAIN, 12));
         add(status, BorderLayout.SOUTH);
 
@@ -79,49 +79,104 @@ public class MenuStyle extends JPanel {
     }
 
     // =========================
-    // 아이콘 툴바
+    // 툴바 생성
     // =========================
     public void addToolbar(ActionListener fileListener,
                            ActionListener themeListener) {
 
-        addButton("＋", "New", fileListener);
-        addButton("▤", "Open", fileListener);
-        addButton("▣", "Save", fileListener);
-        addButton("×", "Clear", fileListener);
+        addButton("＋ 새 메모", "New", fileListener);
+        addButton("▤ 열기", "Open", fileListener);
+        addButton("▣ 저장", "Save", fileListener);
+        addButton("× 지우기", "Clear", fileListener);
 
-        toolbar.addSeparator(new Dimension(15, 25));
+        toolbar.addSeparator(new Dimension(10, 25));
 
         addButton("●", "Mint", themeListener);
         addButton("●", "Pink", themeListener);
         addButton("●", "Snow", themeListener);
     }
 
-    private void addButton(String icon, String command,
+    // =========================
+    // 툴바 버튼 디자인
+    // =========================
+    private void addButton(String text, String command,
                            ActionListener listener) {
 
-        JButton button = new JButton(icon);
+        JButton button = new JButton(text);
 
         button.setActionCommand(command);
         button.setToolTipText(command);
-        button.setFont(new Font("Dialog", Font.BOLD, 21));
-
-        button.setForeground(
-                command.equals("Mint") ? new Color(119, 183, 131) :
-                        command.equals("Pink") ? new Color(238, 153, 183) :
-                                command.equals("Snow") ? new Color(145, 189, 226) :
-                                        ink
-        );
-
-        button.setBackground(new Color(250, 250, 248));
+        button.setFont(new Font("Dialog", Font.BOLD, 13));
         button.setFocusPainted(false);
-        button.setPreferredSize(new Dimension(48, 39));
+        button.setOpaque(true);
+
+        Color bg = new Color(240, 245, 240);
+        Color fg = new Color(60, 100, 75);
+
+        // 새 메모 - 연한 민트
+        if (command.equals("New")) {
+            bg = new Color(224, 242, 229);
+            fg = new Color(52, 104, 75);
+
+            // 열기 - 연한 파랑
+        } else if (command.equals("Open")) {
+            bg = new Color(230, 241, 250);
+            fg = new Color(59, 103, 137);
+
+            // 저장 - 진한 초록
+        } else if (command.equals("Save")) {
+            bg = new Color(63, 128, 96);
+            fg = Color.WHITE;
+
+            // 지우기 - 연한 분홍
+        } else if (command.equals("Clear")) {
+            bg = new Color(251, 228, 235);
+            fg = new Color(166, 83, 112);
+
+            // 테마 버튼
+        } else {
+
+            button.setFont(new Font("Dialog", Font.BOLD, 21));
+            bg = Color.WHITE;
+
+            if (command.equals("Mint")) {
+                fg = new Color(119, 183, 131);
+
+            } else if (command.equals("Pink")) {
+                fg = new Color(238, 153, 183);
+
+            } else if (command.equals("Snow")) {
+                fg = new Color(145, 189, 226);
+            }
+        }
+
+        button.setBackground(bg);
+        button.setForeground(fg);
+
+        button.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(
+                        new Color(218, 225, 218), 1
+                ),
+                BorderFactory.createEmptyBorder(8, 8, 8, 8)
+        ));
+
+        // 버튼 크기 구분
+        if (command.equals("Mint") ||
+                command.equals("Pink") ||
+                command.equals("Snow")) {
+
+            button.setPreferredSize(new Dimension(34, 40));
+
+        } else {
+            button.setPreferredSize(new Dimension(94, 40));
+        }
 
         button.addActionListener(listener);
         toolbar.add(button);
     }
 
     // =========================
-    // 크리스마스 테마 변경
+    // 테마 변경
     // =========================
     public void setTheme(String name) {
 
@@ -136,9 +191,7 @@ public class MenuStyle extends JPanel {
                 ribbon = new Color(230, 148, 180);
                 ink = new Color(145, 86, 112);
 
-                subtitle.setText(
-                        "♡ PINK RIBBON CHRISTMAS ♡"
-                );
+                subtitle.setText("♡ PINK RIBBON CHRISTMAS ♡");
                 break;
 
             case "Snow":
@@ -148,9 +201,7 @@ public class MenuStyle extends JPanel {
                 ribbon = new Color(194, 174, 225);
                 ink = new Color(83, 118, 152);
 
-                subtitle.setText(
-                        "❄ SNOWY CHRISTMAS ❄"
-                );
+                subtitle.setText("❄ SNOWY CHRISTMAS ❄");
                 break;
 
             default:
@@ -160,12 +211,12 @@ public class MenuStyle extends JPanel {
                 ribbon = new Color(244, 173, 196);
                 ink = new Color(80, 116, 87);
 
-                subtitle.setText(
-                        "♡ MINT BUNNY CHRISTMAS ♡"
-                );
+                subtitle.setText("♡ MINT BUNNY CHRISTMAS ♡");
+                break;
         }
 
         setBackground(background);
+
         title.setForeground(ink);
         subtitle.setForeground(ink);
         status.setForeground(ink);
@@ -174,20 +225,14 @@ public class MenuStyle extends JPanel {
         textArea.setForeground(ink);
         textArea.setCaretColor(ink);
         textArea.setBackground(paper);
-
-        textArea.setLineColor(
-                new Color(
-                        ink.getRed(),
-                        ink.getGreen(),
-                        ink.getBlue(),
-                        55
-                )
-        );
-
-        JScrollPane scroll =
-                (JScrollPane) textArea.getParent().getParent();
-
         scroll.getViewport().setBackground(paper);
+
+        textArea.setLineColor(new Color(
+                ink.getRed(),
+                ink.getGreen(),
+                ink.getBlue(),
+                55
+        ));
 
         card.repaint();
         textArea.repaint();
@@ -210,9 +255,7 @@ public class MenuStyle extends JPanel {
 
             g.setColor(lineColor);
 
-            int height =
-                    getFontMetrics(getFont()).getHeight();
-
+            int height = getFontMetrics(getFont()).getHeight();
             int start = getInsets().top + height - 2;
 
             for (int y = start; y < getHeight(); y += height) {
@@ -224,7 +267,7 @@ public class MenuStyle extends JPanel {
     }
 
     // =========================
-    // 크리스마스 메모지
+    // 크리스마스 메모지 디자인
     // =========================
     private class NoteCard extends JPanel {
 
@@ -233,8 +276,7 @@ public class MenuStyle extends JPanel {
 
             super.paintComponent(graphics);
 
-            Graphics2D g =
-                    (Graphics2D) graphics.create();
+            Graphics2D g = (Graphics2D) graphics.create();
 
             g.setRenderingHint(
                     RenderingHints.KEY_ANTIALIASING,
@@ -248,11 +290,9 @@ public class MenuStyle extends JPanel {
             g.setColor(frame);
             g.fillRoundRect(0, 0, w, h, 20, 20);
 
-            // 둥근 메모지
+            // 메모지
             g.setColor(paper);
-            g.fillRoundRect(
-                    62, 104, w - 124, h - 180, 36, 36
-            );
+            g.fillRoundRect(62, 104, w - 124, h - 180, 36, 36);
 
             // 위아래 종이 테두리
             for (int x = 85; x < w - 75; x += 34) {
@@ -266,7 +306,7 @@ public class MenuStyle extends JPanel {
                 g.fillOval(w - 91, y - 20, 47, 47);
             }
 
-            // 분홍 리본
+            // 리본
             g.setColor(ribbon);
 
             g.fillOval(w / 2 - 55, 12, 54, 39);
@@ -286,17 +326,15 @@ public class MenuStyle extends JPanel {
             g.setColor(new Color(255, 235, 142));
             g.fillOval(w/2-6, 28, 12, 12);
 
-            // 크리스마스 전구
+            // 크리스마스 전구 줄
             g.setColor(Color.WHITE);
             g.setStroke(new BasicStroke(2f));
 
-            g.draw(
-                    new QuadCurve2D.Double(
-                            w * .25, 80,
-                            w * .5, 117,
-                            w * .75, 80
-                    )
-            );
+            g.draw(new QuadCurve2D.Double(
+                    w * .25, 80,
+                    w * .5, 117,
+                    w * .75, 80
+            ));
 
             Color[] lights = {
                     new Color(249, 184, 193),
@@ -317,61 +355,49 @@ public class MenuStyle extends JPanel {
                 );
             }
 
-            // 토끼 4마리
-            bunny(
-                    g, 51, 64,
-                    new Color(252, 190, 199)
-            );
+            // 토끼 캐릭터
+            bunny(g, 51, 64, new Color(252, 190, 199));
+            bunny(g, w-51, 64, new Color(245, 187, 193));
+            bunny(g, 51, h-68, new Color(212, 182, 157));
+            bunny(g, w-51, h-68, new Color(249, 187, 208));
 
-            bunny(
-                    g, w-51, 64,
-                    new Color(245, 187, 193)
-            );
-
-            bunny(
-                    g, 51, h-68,
-                    new Color(212, 182, 157)
-            );
-
-            bunny(
-                    g, w-51, h-68,
-                    new Color(249, 187, 208)
-            );
-
-            // 별 장식
+            // 작은 별 장식
             g.setColor(new Color(255, 239, 170));
 
-            for (int[] p : new int[][]{
+            int[][] stars = {
                     {104, 30},
                     {w-104, 31},
                     {29, h/2},
                     {w-30, h/2},
                     {w/2, h-35}
-            }) {
-                g.fillOval(
-                        p[0]-5, p[1]-5, 10, 10
-                );
+            };
+
+            for (int[] p : stars) {
+                g.fillOval(p[0]-5, p[1]-5, 10, 10);
             }
 
-            // 작은 눈 장식
+            // 눈 장식
             g.setColor(Color.WHITE);
 
-            for (int[] p : new int[][]{
+            int[][] snow = {
                     {29, 115},
                     {w-28, 155},
                     {31, h-145},
                     {w-31, h-148}
-            }) {
+            };
+
+            for (int[] p : snow) {
                 g.fillOval(p[0], p[1], 6, 6);
             }
 
             g.dispose();
         }
 
+        // =========================
         // 토끼 캐릭터
-        private void bunny(
-                Graphics2D g, int x, int y, Color coat
-        ) {
+        // =========================
+        private void bunny(Graphics2D g, int x, int y,
+                           Color coat) {
 
             Graphics2D b = (Graphics2D) g.create();
 

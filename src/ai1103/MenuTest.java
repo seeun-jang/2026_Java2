@@ -1,8 +1,8 @@
 
 package ai1103;
 
-import center.SetFrame;
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
@@ -15,9 +15,11 @@ public class MenuTest extends JFrame implements MouseListener {
     private File currentFile;
 
     public MenuTest() {
+
         setContentPane(style);
         textArea.addMouseListener(this);
 
+        // 메뉴 생성
         JMenuBar menuBar = new JMenuBar();
         JMenu fileMenu = new JMenu("File");
         JMenu themeMenu = new JMenu("Theme");
@@ -26,17 +28,20 @@ public class MenuTest extends JFrame implements MouseListener {
         menuBar.add(themeMenu);
         setJMenuBar(menuBar);
 
-        // File 메뉴와 툴바가 같은 리스너 사용
+        // File 메뉴 이벤트
         ActionListener fileListener = new ActionListener() {
 
             @Override
             public void actionPerformed(ActionEvent e) {
 
                 switch (e.getActionCommand()) {
+
                     case "New":
-                        textArea.setText("");
-                        currentFile = null;
-                        style.setTheme("Mint");
+                        if (confirmClear()) {
+                            textArea.setText("");
+                            currentFile = null;
+                            style.status.setText("새 메모");
+                        }
                         break;
 
                     case "Open":
@@ -48,8 +53,10 @@ public class MenuTest extends JFrame implements MouseListener {
                         break;
 
                     case "Clear":
-                        textArea.setText("");
-                        style.status.setText("메모를 지웠습니다.");
+                        if (confirmClear()) {
+                            textArea.setText("");
+                            style.status.setText("메모를 지웠습니다.");
+                        }
                         break;
 
                     case "Close":
@@ -59,13 +66,14 @@ public class MenuTest extends JFrame implements MouseListener {
             }
         };
 
-        // 교수님 방식: ActionListener + switch-case
+        // Theme 메뉴 이벤트
         ActionListener themeListener = new ActionListener() {
 
             @Override
             public void actionPerformed(ActionEvent e) {
 
                 switch (e.getActionCommand()) {
+
                     case "Mint":
                         style.setTheme("Mint");
                         break;
@@ -81,24 +89,30 @@ public class MenuTest extends JFrame implements MouseListener {
             }
         };
 
-        // 메뉴 등록
+        // File 메뉴 항목
         addItem(fileMenu, "New", fileListener);
         addItem(fileMenu, "Open", fileListener);
         addItem(fileMenu, "Save", fileListener);
         addItem(fileMenu, "Clear", fileListener);
+
         fileMenu.addSeparator();
         addItem(fileMenu, "Close", fileListener);
 
+        // Theme 메뉴 항목
         addItem(themeMenu, "Mint", themeListener);
         addItem(themeMenu, "Pink", themeListener);
         addItem(themeMenu, "Snow", themeListener);
 
-        // 툴바에도 리스너 연결
+        // 툴바 연결
         style.addToolbar(fileListener, themeListener);
 
-        SetFrame.setFrame(this, "Christmas Memo", 660, 720);
-        setMinimumSize(new java.awt.Dimension(570, 630));
+        // 창 설정
+        setTitle("Christmas Memo");
+        setSize(660, 720);
+        setMinimumSize(new Dimension(570, 630));
         setLocationRelativeTo(null);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setVisible(true);
     }
 
     // 메뉴 항목 추가
@@ -108,6 +122,23 @@ public class MenuTest extends JFrame implements MouseListener {
         JMenuItem item = new JMenuItem(name);
         item.addActionListener(listener);
         menu.add(item);
+    }
+
+    // 메모 삭제 확인
+    private boolean confirmClear() {
+
+        if (textArea.getText().isEmpty()) {
+            return true;
+        }
+
+        int result = JOptionPane.showConfirmDialog(
+                this,
+                "작성한 메모를 지울까요?",
+                "확인",
+                JOptionPane.YES_NO_OPTION
+        );
+
+        return result == JOptionPane.YES_OPTION;
     }
 
     // 파일 열기
@@ -121,14 +152,14 @@ public class MenuTest extends JFrame implements MouseListener {
             try {
                 File file = chooser.getSelectedFile();
 
-                textArea.setText(
-                        Files.readString(
-                                file.toPath(),
-                                StandardCharsets.UTF_8
-                        )
+                String text = Files.readString(
+                        file.toPath(),
+                        StandardCharsets.UTF_8
                 );
 
+                textArea.setText(text);
                 currentFile = file;
+
                 style.status.setText("열기: " + file.getName());
 
             } catch (Exception ex) {
@@ -145,6 +176,7 @@ public class MenuTest extends JFrame implements MouseListener {
         File file = currentFile;
 
         if (file == null) {
+
             JFileChooser chooser = new JFileChooser();
 
             if (chooser.showSaveDialog(this)
@@ -154,18 +186,24 @@ public class MenuTest extends JFrame implements MouseListener {
 
             file = chooser.getSelectedFile();
 
+            // TXT 확장자 추가
             if (!file.getName().toLowerCase().endsWith(".txt")) {
                 file = new File(file.getPath() + ".txt");
             }
 
-            if (file.exists() &&
-                    JOptionPane.showConfirmDialog(
-                            this,
-                            "기존 파일을 덮어쓸까요?",
-                            "저장 확인",
-                            JOptionPane.YES_NO_OPTION
-                    ) != JOptionPane.YES_OPTION) {
-                return;
+            // 덮어쓰기 확인
+            if (file.exists()) {
+
+                int result = JOptionPane.showConfirmDialog(
+                        this,
+                        "기존 파일을 덮어쓸까요?",
+                        "저장 확인",
+                        JOptionPane.YES_NO_OPTION
+                );
+
+                if (result != JOptionPane.YES_OPTION) {
+                    return;
+                }
             }
         }
 
@@ -186,7 +224,7 @@ public class MenuTest extends JFrame implements MouseListener {
         }
     }
 
-    // MouseListener
+    // 마우스 이벤트
     @Override
     public void mouseClicked(MouseEvent e) {
         style.status.setText(
@@ -207,6 +245,11 @@ public class MenuTest extends JFrame implements MouseListener {
     public void mouseReleased(MouseEvent e) {}
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(MenuTest::new);
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                new MenuTest();
+            }
+        });
     }
 }
