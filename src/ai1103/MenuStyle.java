@@ -1,442 +1,514 @@
-
 package ai1103;
 
 import javax.swing.*;
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.event.ActionListener;
-import java.awt.geom.QuadCurve2D;
+import java.awt.event.*;
+import java.io.File;
+import java.time.LocalDate;
 
 public class MenuStyle extends JPanel {
 
-    public final NoteArea textArea = new NoteArea();
-    public final JLabel status = new JLabel("Ready");
+    // MenuTest에서 사용하는 메모장 구성 요소
+    public final DiaryArea textArea = new DiaryArea();
+    public final JTextField filmTitle = new JTextField();
+    public final JLabel status = new JLabel("●  Ready to write");
 
-    private final JLabel title =
-            new JLabel("Merry Little Notes", SwingConstants.CENTER);
+    // 사진마다 제목과 감상평을 잠시 보관
+    private final String[] titles = {"", "", ""};
+    private final String[] reviews = {"", "", ""};
+    private int photoIndex = 0;
 
-    private final JLabel subtitle =
-            new JLabel("♡ CHRISTMAS NOTE ♡", SwingConstants.CENTER);
+    private final JPanel header = new JPanel(new BorderLayout());
+    private final JPanel toolbar = new JPanel(new BorderLayout());
+    private final JPanel fileButtons = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+    private final JPanel themeButtons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 7, 0));
+    private final JButton[] themeDots = new JButton[3];
+    private final JPanel gallery = new JPanel(new BorderLayout(18, 0));
+    private final JPanel photoCard = new JPanel(new BorderLayout(0, 10));
+    private final JPanel infoCard = new JPanel();
+    private final JPanel diaryCard = new JPanel(new BorderLayout(0, 12));
+    private final JPanel filmRow = new JPanel(new BorderLayout(12, 0));
+    private final JPanel footer = new JPanel(new BorderLayout());
 
-    private final JToolBar toolbar = new JToolBar();
-    private final NoteCard card = new NoteCard();
+    private final PhotoCanvas photoLabel = new PhotoCanvas();
+    private final JLabel counter = new JLabel("STILL 01 / 03");
+    private final JLabel themeInfo = new JLabel("IVORY / THE FILM FILES");
+    private final JLabel heading = new JLabel("THE FILM FILES.");
+    private final JLabel subtitle = new JLabel("A PRIVATE ARCHIVE OF FRAMES & FEELINGS");
+    private final JLabel galleryHeading = new JLabel("SCENE ARCHIVE");
+    private final JLabel galleryDescription = new JLabel("Some scenes stay with us.");
+    private final JLabel noteHeading = new JLabel("Dear cinema,");
+    private final JLabel filmLabel = new JLabel("FILM TITLE");
+    private final JLabel dateLabel = new JLabel(LocalDate.now().toString());
+
+    private final JButton[] frameButtons = new JButton[3];
+    // 안내 패널 문구
+    private final JLabel guideTitle = new JLabel("HOW TO KEEP A FILM NOTE");
+    private final JLabel guideOne = new JLabel("01   기억하고 싶은 장면을 고르세요.");
+    private final JLabel guideTwo = new JLabel("02   영화 제목과 감상평을 적으세요.");
+    private final JLabel guideThree = new JLabel("03   저장 버튼으로 TXT 파일을 남기세요.");
+    private final JLabel guideFoot = new JLabel("장면별로 서로 다른 메모를 쓸 수 있어요.");
+
     private final JScrollPane scroll = new JScrollPane(textArea);
 
-    // 기본 색상
-    private Color frame = new Color(159, 208, 165);
-    private Color paper = new Color(255, 252, 245);
-    private Color ribbon = new Color(244, 173, 196);
-    private Color ink = new Color(80, 116, 87);
+    private Color background;
+    private Color cardColor;
+    private Color paperColor;
+    private Color ink;
+    private Color muted;
+    private Color accent;
+    private Color borderColor;
+    private String themeName = "Ivory";
 
     public MenuStyle() {
-
-        setLayout(new BorderLayout(0, 14));
-        setBorder(new EmptyBorder(17, 24, 15, 24));
+        setLayout(new BorderLayout(0, 17));
+        setBorder(new EmptyBorder(21, 25, 14, 25));
 
         // 상단 제목
-        JPanel top = new JPanel(new BorderLayout(0, 10));
-        top.setOpaque(false);
+        JPanel titleArea = new JPanel(new BorderLayout(0, 3));
+        titleArea.setOpaque(false);
+        heading.setFont(new Font("Serif", Font.BOLD, 34));
+        subtitle.setFont(new Font("Dialog", Font.PLAIN, 10));
+        titleArea.add(heading, BorderLayout.NORTH);
+        titleArea.add(subtitle, BorderLayout.SOUTH);
 
-        JPanel heading = new JPanel(new BorderLayout(0, 4));
-        heading.setOpaque(false);
+        JLabel edition = new JLabel("VOL. 01   /   PERSONAL FILM JOURNAL");
+        edition.setFont(new Font("Dialog", Font.PLAIN, 11));
+        edition.setForeground(new Color(118, 113, 107));
+        header.add(titleArea, BorderLayout.WEST);
+        header.add(edition, BorderLayout.EAST);
 
-        title.setFont(new Font("Serif", Font.BOLD, 28));
-        subtitle.setFont(new Font("Dialog", Font.PLAIN, 12));
+        // 제목 아래에 파일 관리 및 테마 툴바 배치
+        JPanel topArea = new JPanel(new BorderLayout(0, 15));
+        topArea.setOpaque(false);
+        topArea.add(header, BorderLayout.NORTH);
+        toolbar.setOpaque(false);
+        fileButtons.setOpaque(false);
+        themeButtons.setOpaque(false);
+        toolbar.add(fileButtons, BorderLayout.WEST);
+        toolbar.add(themeButtons, BorderLayout.EAST);
+        topArea.add(toolbar, BorderLayout.SOUTH);
+        add(topArea, BorderLayout.NORTH);
 
-        heading.add(title, BorderLayout.NORTH);
-        heading.add(subtitle, BorderLayout.SOUTH);
+        // 사진 영역: 가로로 길게 늘리지 않고, 종이 액자 가운데 배치
+        photoLabel.setPreferredSize(new Dimension(495, 280));
+        photoLabel.setToolTipText("오른쪽의 01, 02, 03 버튼으로 사진을 선택하세요.");
+        JPanel photoHolder = new JPanel(new GridBagLayout());
+        photoHolder.setOpaque(false);
+        photoHolder.add(photoLabel);
 
-        // 툴바
-        toolbar.setFloatable(false);
-        toolbar.setBackground(new Color(255, 255, 255));
-        toolbar.setBorder(new EmptyBorder(7, 7, 7, 7));
+        photoCard.add(photoHolder, BorderLayout.CENTER);
+        JLabel photoCaption = new JLabel("MOMENTS ON FILM   /   PERSONAL SCENE COLLECTION");
+        photoCaption.setFont(new Font("Dialog", Font.PLAIN, 10));
+        photoCaption.setForeground(new Color(111, 108, 103));
+        photoCard.add(photoCaption, BorderLayout.SOUTH);
+        photoCard.setPreferredSize(new Dimension(625, 350));
+        gallery.add(photoCard, BorderLayout.CENTER);
 
-        top.add(heading, BorderLayout.NORTH);
-        top.add(toolbar, BorderLayout.SOUTH);
+        // 오른쪽 아카이브 인덱스
+        infoCard.setLayout(new BoxLayout(infoCard, BoxLayout.Y_AXIS));
+        infoCard.setBorder(new EmptyBorder(14, 22, 14, 18));
+        infoCard.setPreferredSize(new Dimension(326, 0));
+        galleryHeading.setFont(new Font("Dialog", Font.BOLD, 11));
+        galleryDescription.setFont(new Font("Serif", Font.ITALIC, 18));
+        counter.setFont(new Font("Dialog", Font.BOLD, 12));
+        galleryHeading.setAlignmentX(Component.LEFT_ALIGNMENT);
+        galleryDescription.setAlignmentX(Component.LEFT_ALIGNMENT);
+        counter.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        add(top, BorderLayout.NORTH);
+        infoCard.add(galleryHeading);
+        infoCard.add(Box.createVerticalStrut(10));
+        infoCard.add(galleryDescription);
+        infoCard.add(Box.createVerticalStrut(16));
+        infoCard.add(counter);
+        infoCard.add(Box.createVerticalStrut(11));
 
-        // 메모 영역
+        JPanel frameRow = new JPanel(new GridLayout(1, 3, 8, 0));
+        frameRow.setOpaque(false);
+        for (int i = 0; i < 3; i++) {
+            final int number = i;
+            JButton button = new JButton("0" + (i + 1));
+            button.setFont(new Font("Dialog", Font.BOLD, 12));
+            button.setFocusPainted(false);
+            button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            button.setPreferredSize(new Dimension(51, 40));
+            button.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    changePhoto(number);
+                }
+            });
+            frameButtons[i] = button;
+            frameRow.add(button);
+        }
+        frameRow.setAlignmentX(Component.LEFT_ALIGNMENT);
+        frameRow.setPreferredSize(new Dimension(169, 40));
+        frameRow.setMinimumSize(new Dimension(169, 40));
+        frameRow.setMaximumSize(new Dimension(169, 40));
+        infoCard.add(frameRow);
+        infoCard.add(Box.createVerticalStrut(11));
+
+        // 선택 방법 안내: 불필요한 이전/다음 버튼 대신 짧은 설명
+        infoCard.add(Box.createVerticalStrut(13));
+        JSeparator separator = new JSeparator();
+        separator.setAlignmentX(Component.LEFT_ALIGNMENT);
+        separator.setForeground(new Color(213, 206, 197));
+        separator.setBackground(new Color(213, 206, 197));
+        separator.setMaximumSize(new Dimension(250, 1));
+        infoCard.add(separator);
+        infoCard.add(Box.createVerticalStrut(12));
+
+        guideTitle.setFont(new Font("Dialog", Font.BOLD, 11));
+        guideOne.setFont(new Font("Dialog", Font.PLAIN, 12));
+        guideTwo.setFont(new Font("Dialog", Font.PLAIN, 12));
+        guideThree.setFont(new Font("Dialog", Font.PLAIN, 12));
+        guideFoot.setFont(new Font("Dialog", Font.PLAIN, 11));
+        for (JLabel line : new JLabel[]{guideTitle, guideOne, guideTwo, guideThree, guideFoot}) {
+            line.setAlignmentX(Component.LEFT_ALIGNMENT);
+        }
+
+        infoCard.add(guideTitle);
+        infoCard.add(Box.createVerticalStrut(12));
+        infoCard.add(guideOne);
+        infoCard.add(Box.createVerticalStrut(8));
+        infoCard.add(guideTwo);
+        infoCard.add(Box.createVerticalStrut(8));
+        infoCard.add(guideThree);
+        infoCard.add(Box.createVerticalGlue());
+        infoCard.add(guideFoot);
+
+        gallery.add(infoCard, BorderLayout.EAST);
+        gallery.setPreferredSize(new Dimension(0, 350));
+
+        // 하단 일기장
+        noteHeading.setFont(new Font("Serif", Font.ITALIC, 27));
+        filmLabel.setFont(new Font("Dialog", Font.BOLD, 11));
+        dateLabel.setFont(new Font("Dialog", Font.PLAIN, 11));
+
+        filmTitle.setFont(new Font("Dialog", Font.PLAIN, 14));
+        filmTitle.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(209, 205, 197)),
+                new EmptyBorder(8, 10, 8, 10)));
+        filmTitle.setToolTipText("영화 제목을 입력하세요.");
+
+        JPanel filmInput = new JPanel(new BorderLayout(9, 0));
+        filmInput.setOpaque(false);
+        filmInput.add(filmLabel, BorderLayout.WEST);
+        filmInput.add(filmTitle, BorderLayout.CENTER);
+        filmInput.setPreferredSize(new Dimension(420, 38));
+        filmRow.add(filmInput, BorderLayout.CENTER);
+        filmRow.add(dateLabel, BorderLayout.EAST);
+        filmRow.setOpaque(false);
+
+        JPanel diaryTop = new JPanel(new BorderLayout(0, 12));
+        diaryTop.setOpaque(false);
+        diaryTop.add(noteHeading, BorderLayout.NORTH);
+        diaryTop.add(filmRow, BorderLayout.SOUTH);
+        diaryCard.add(diaryTop, BorderLayout.NORTH);
+
         textArea.setFont(new Font("Dialog", Font.PLAIN, 16));
-        textArea.setMargin(new Insets(12, 12, 12, 12));
+        textArea.setMargin(new Insets(17, 26, 17, 16));
         textArea.setLineWrap(true);
         textArea.setWrapStyleWord(true);
         textArea.setOpaque(false);
-
+        textArea.setToolTipText("영화를 보고 느낀 점을 자유롭게 기록해 보세요.");
         scroll.setBorder(BorderFactory.createEmptyBorder());
+        diaryCard.add(scroll, BorderLayout.CENTER);
+        diaryCard.setBorder(new EmptyBorder(18, 20, 18, 20));
 
-        card.setLayout(new BorderLayout());
-        card.setBorder(new EmptyBorder(122, 84, 90, 84));
-        card.add(scroll, BorderLayout.CENTER);
+        JPanel mainArea = new JPanel(new BorderLayout(0, 18));
+        mainArea.setOpaque(false);
+        mainArea.add(gallery, BorderLayout.NORTH);
+        mainArea.add(diaryCard, BorderLayout.CENTER);
+        add(mainArea, BorderLayout.CENTER);
 
-        add(card, BorderLayout.CENTER);
+        // 하단 상태 정보
+        status.setFont(new Font("Dialog", Font.PLAIN, 11));
+        themeInfo.setFont(new Font("Dialog", Font.PLAIN, 11));
+        footer.add(status, BorderLayout.WEST);
+        footer.add(themeInfo, BorderLayout.EAST);
+        add(footer, BorderLayout.SOUTH);
 
-        // 상태 표시
-        status.setFont(new Font("Dialog", Font.PLAIN, 12));
-        add(status, BorderLayout.SOUTH);
-
-        setTheme("Mint");
+        setTheme("Ivory");
+        updatePhoto();
     }
 
-    // =========================
-    // 툴바 생성
-    // =========================
-    public void addToolbar(ActionListener fileListener,
-                           ActionListener themeListener) {
+    // 툴바: 왼쪽은 파일 기능, 오른쪽은 색상 아이콘
+    public void addToolbar(ActionListener fileListener, ActionListener themeListener) {
+        fileButtons.removeAll();
+        themeButtons.removeAll();
 
-        addButton("＋ 새 메모", "New", fileListener);
-        addButton("▤ 열기", "Open", fileListener);
-        addButton("▣ 저장", "Save", fileListener);
-        addButton("× 지우기", "Clear", fileListener);
+        addFileButton("＋  새 메모", "New", fileListener);
+        addFileButton("▤  열기", "Open", fileListener);
+        addFileButton("▣  저장", "Save", fileListener);
+        addFileButton("×  지우기", "Clear", fileListener);
 
-        toolbar.addSeparator(new Dimension(10, 25));
+        JLabel themeLabel = new JLabel("THEME");
+        themeLabel.setFont(new Font("Dialog", Font.BOLD, 10));
+        themeLabel.setForeground(muted);
+        themeButtons.add(themeLabel);
 
-        addButton("●", "Mint", themeListener);
-        addButton("●", "Pink", themeListener);
-        addButton("●", "Snow", themeListener);
+        String[] names = {"Ivory", "Sage", "Blush"};
+        Color[] colors = {
+                new Color(217, 195, 153),
+                new Color(136, 164, 138),
+                new Color(215, 156, 162)
+        };
+        for (int i = 0; i < 3; i++) {
+            JButton button = new JButton("●");
+            button.setActionCommand(names[i]);
+            button.setToolTipText(names[i]);
+            button.setFont(new Font("Dialog", Font.BOLD, 23));
+            button.setForeground(colors[i]);
+            button.setPreferredSize(new Dimension(34, 36));
+            button.setFocusPainted(false);
+            button.setContentAreaFilled(false);
+            button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            button.addActionListener(themeListener);
+            themeDots[i] = button;
+            themeButtons.add(button);
+        }
+        updateThemeDots();
+        toolbar.revalidate();
+        toolbar.repaint();
     }
 
-    // =========================
-    // 툴바 버튼 디자인
-    // =========================
-    private void addButton(String text, String command,
-                           ActionListener listener) {
-
-        JButton button = new JButton(text);
-
+    // 모든 파일 버튼 같은 색으로 통일
+    private void addFileButton(String label, String command, ActionListener listener) {
+        JButton button = new JButton(label);
         button.setActionCommand(command);
         button.setToolTipText(command);
-        button.setFont(new Font("Dialog", Font.BOLD, 13));
+        button.setFont(new Font("Dialog", Font.BOLD, 11));
         button.setFocusPainted(false);
-        button.setOpaque(true);
-
-        Color bg = new Color(240, 245, 240);
-        Color fg = new Color(60, 100, 75);
-
-        // 새 메모 - 연한 민트
-        if (command.equals("New")) {
-            bg = new Color(224, 242, 229);
-            fg = new Color(52, 104, 75);
-
-            // 열기 - 연한 파랑
-        } else if (command.equals("Open")) {
-            bg = new Color(230, 241, 250);
-            fg = new Color(59, 103, 137);
-
-            // 저장 - 진한 초록
-        } else if (command.equals("Save")) {
-            bg = new Color(63, 128, 96);
-            fg = Color.WHITE;
-
-            // 지우기 - 연한 분홍
-        } else if (command.equals("Clear")) {
-            bg = new Color(251, 228, 235);
-            fg = new Color(166, 83, 112);
-
-            // 테마 버튼
-        } else {
-
-            button.setFont(new Font("Dialog", Font.BOLD, 21));
-            bg = Color.WHITE;
-
-            if (command.equals("Mint")) {
-                fg = new Color(119, 183, 131);
-
-            } else if (command.equals("Pink")) {
-                fg = new Color(238, 153, 183);
-
-            } else if (command.equals("Snow")) {
-                fg = new Color(145, 189, 226);
-            }
-        }
-
-        button.setBackground(bg);
-        button.setForeground(fg);
-
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        button.setBackground(cardColor);
+        button.setForeground(ink);
         button.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(
-                        new Color(218, 225, 218), 1
-                ),
-                BorderFactory.createEmptyBorder(8, 8, 8, 8)
-        ));
-
-        // 버튼 크기 구분
-        if (command.equals("Mint") ||
-                command.equals("Pink") ||
-                command.equals("Snow")) {
-
-            button.setPreferredSize(new Dimension(34, 40));
-
-        } else {
-            button.setPreferredSize(new Dimension(94, 40));
-        }
-
+                BorderFactory.createLineBorder(borderColor),
+                new EmptyBorder(10, 13, 10, 13)));
         button.addActionListener(listener);
-        toolbar.add(button);
+        fileButtons.add(button);
     }
 
-    // =========================
-    // 테마 변경
-    // =========================
+    private void updateThemeDots() {
+        for (int i = 0; i < 3; i++) {
+            JButton button = themeDots[i];
+            if (button != null) {
+                String name = button.getActionCommand();
+                button.setBorder(BorderFactory.createLineBorder(
+                        name.equals(themeName) ? ink : background,
+                        1));
+            }
+        }
+    }
+
+    public int getPhotoIndex() {
+        return photoIndex;
+    }
+
+    public void nextPhoto() {
+        changePhoto((photoIndex + 1) % 3);
+    }
+
+    public void previousPhoto() {
+        changePhoto((photoIndex + 2) % 3);
+    }
+
+    // 장면마다 입력한 제목과 감상평을 보관
+    public void changePhoto(int newIndex) {
+        titles[photoIndex] = filmTitle.getText();
+        reviews[photoIndex] = textArea.getText();
+
+        photoIndex = newIndex;
+        filmTitle.setText(titles[photoIndex]);
+        textArea.setText(reviews[photoIndex]);
+        textArea.setCaretPosition(0);
+        updatePhoto();
+        status.setText("●  Scene " + (photoIndex + 1) + " selected");
+    }
+
+    public void setCurrentNote(String title, String review) {
+        filmTitle.setText(title);
+        textArea.setText(review);
+        titles[photoIndex] = title;
+        reviews[photoIndex] = review;
+    }
+
+    private void updatePhoto() {
+        String path = "images/scene" + (photoIndex + 1) + ".jpg";
+        File imageFile = new File(path);
+
+        if (!imageFile.exists()) {
+            imageFile = new File("src/" + path);
+        }
+
+        try {
+            photoLabel.setImage(ImageIO.read(imageFile));
+        } catch (Exception ex) {
+            photoLabel.setImage(null);
+        }
+
+        counter.setText("STILL 0" + (photoIndex + 1) + " / 03");
+        themeInfo.setText("SCENE " + (photoIndex + 1) + "/3  ·  " + themeName.toUpperCase());
+        updateFrameButtons();
+    }
+
+    private void updateFrameButtons() {
+        if (accent == null) return;
+        for (int i = 0; i < 3; i++) {
+            boolean selected = (i == photoIndex);
+            frameButtons[i].setBackground(selected ? accent : cardColor);
+            frameButtons[i].setForeground(selected ? Color.WHITE : ink);
+            frameButtons[i].setBorder(BorderFactory.createLineBorder(borderColor));
+        }
+    }
+
     public void setTheme(String name) {
-
-        Color background;
-
+        themeName = name;
         switch (name) {
-
-            case "Pink":
-                background = new Color(255, 246, 249);
-                frame = new Color(245, 184, 200);
-                paper = new Color(255, 239, 245);
-                ribbon = new Color(230, 148, 180);
-                ink = new Color(145, 86, 112);
-
-                subtitle.setText("♡ PINK RIBBON CHRISTMAS ♡");
+            case "Sage":
+                background = new Color(229, 234, 224);
+                cardColor = new Color(246, 248, 242);
+                paperColor = new Color(250, 250, 245);
+                ink = new Color(48, 60, 50);
+                muted = new Color(101, 117, 103);
+                accent = new Color(86, 111, 90);
+                borderColor = new Color(182, 193, 177);
                 break;
-
-            case "Snow":
-                background = new Color(245, 250, 255);
-                frame = new Color(177, 211, 237);
-                paper = new Color(251, 253, 255);
-                ribbon = new Color(194, 174, 225);
-                ink = new Color(83, 118, 152);
-
-                subtitle.setText("❄ SNOWY CHRISTMAS ❄");
+            case "Blush":
+                background = new Color(244, 233, 229);
+                cardColor = new Color(255, 249, 245);
+                paperColor = new Color(255, 252, 248);
+                ink = new Color(79, 56, 57);
+                muted = new Color(148, 111, 110);
+                accent = new Color(154, 99, 101);
+                borderColor = new Color(217, 187, 185);
                 break;
-
             default:
-                background = new Color(248, 252, 246);
-                frame = new Color(159, 208, 165);
-                paper = new Color(255, 252, 245);
-                ribbon = new Color(244, 173, 196);
-                ink = new Color(80, 116, 87);
-
-                subtitle.setText("♡ MINT BUNNY CHRISTMAS ♡");
+                background = new Color(238, 234, 226);
+                cardColor = new Color(255, 253, 248);
+                paperColor = new Color(253, 251, 245);
+                ink = new Color(47, 47, 42);
+                muted = new Color(117, 112, 105);
+                accent = new Color(67, 81, 70);
+                borderColor = new Color(210, 205, 195);
                 break;
         }
 
         setBackground(background);
-
-        title.setForeground(ink);
-        subtitle.setForeground(ink);
-        status.setForeground(ink);
-        status.setText("Theme: " + name);
-
+        header.setBackground(background);
+        footer.setBackground(background);
+        gallery.setBackground(background);
+        toolbar.setBackground(background);
+        photoCard.setBackground(cardColor);
+        infoCard.setBackground(cardColor);
+        diaryCard.setBackground(cardColor);
+        scroll.getViewport().setBackground(paperColor);
+        textArea.setBackground(paperColor);
         textArea.setForeground(ink);
         textArea.setCaretColor(ink);
-        textArea.setBackground(paper);
-        scroll.getViewport().setBackground(paper);
+        textArea.setLineColor(borderColor);
+        filmTitle.setBackground(paperColor);
+        filmTitle.setForeground(ink);
+        filmTitle.setCaretColor(ink);
 
-        textArea.setLineColor(new Color(
-                ink.getRed(),
-                ink.getGreen(),
-                ink.getBlue(),
-                55
-        ));
+        heading.setForeground(ink);
+        subtitle.setForeground(muted);
+        galleryHeading.setForeground(muted);
+        galleryDescription.setForeground(ink);
+        counter.setForeground(accent);
+        noteHeading.setForeground(ink);
+        filmLabel.setForeground(muted);
+        dateLabel.setForeground(muted);
+        status.setForeground(ink);
+        themeInfo.setForeground(muted);
+        themeInfo.setText("SCENE " + (photoIndex + 1) + "/3  ·  " + themeName.toUpperCase());
+        guideTitle.setForeground(accent);
+        guideOne.setForeground(ink);
+        guideTwo.setForeground(ink);
+        guideThree.setForeground(ink);
+        guideFoot.setForeground(muted);
+        photoLabel.setBackground(background);
 
-        card.repaint();
-        textArea.repaint();
+        photoCard.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(0, 0, 5, 5, borderColor),
+                BorderFactory.createCompoundBorder(
+                        BorderFactory.createLineBorder(borderColor),
+                        new EmptyBorder(16, 18, 14, 18))));
+        infoCard.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(borderColor),
+                new EmptyBorder(20, 22, 18, 18)));
+        diaryCard.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(borderColor),
+                new EmptyBorder(18, 20, 18, 20)));
+        updateFrameButtons();
+        updateThemeDots();
+        repaint();
     }
 
-    // =========================
-    // 공책 가로줄
-    // =========================
-    public static class NoteArea extends JTextArea {
+    // 사진 전체를 잘림 없이 화면에 표시 (비율 유지)
+    private class PhotoCanvas extends JPanel {
+        private BufferedImage image;
 
-        private Color lineColor =
-                new Color(140, 170, 150, 65);
+        public PhotoCanvas() {
+            setOpaque(true);
+        }
 
-        public void setLineColor(Color color) {
-            lineColor = color;
+        public void setImage(BufferedImage newImage) {
+            image = newImage;
+            repaint();
         }
 
         @Override
         protected void paintComponent(Graphics g) {
-
-            g.setColor(lineColor);
-
-            int height = getFontMetrics(getFont()).getHeight();
-            int start = getInsets().top + height - 2;
-
-            for (int y = start; y < getHeight(); y += height) {
-                g.drawLine(8, y, getWidth() - 8, y);
-            }
-
             super.paintComponent(g);
-        }
-    }
-
-    // =========================
-    // 크리스마스 메모지 디자인
-    // =========================
-    private class NoteCard extends JPanel {
-
-        @Override
-        protected void paintComponent(Graphics graphics) {
-
-            super.paintComponent(graphics);
-
-            Graphics2D g = (Graphics2D) graphics.create();
-
-            g.setRenderingHint(
-                    RenderingHints.KEY_ANTIALIASING,
-                    RenderingHints.VALUE_ANTIALIAS_ON
-            );
+            if (image == null) {
+                g.setColor(Color.DARK_GRAY);
+                g.drawString("사진을 찾을 수 없습니다.", 18, 30);
+                return;
+            }
 
             int w = getWidth();
             int h = getHeight();
+            int iw = image.getWidth();
+            int ih = image.getHeight();
 
-            // 파스텔 프레임
-            g.setColor(frame);
-            g.fillRoundRect(0, 0, w, h, 20, 20);
+            // Math.min을 사용하면 사진이 잘리지 않음
+            double scale = Math.min((double) w / iw, (double) h / ih);
+            int drawW = (int) (iw * scale);
+            int drawH = (int) (ih * scale);
+            int x = (w - drawW) / 2;
+            int y = (h - drawH) / 2;
 
-            // 메모지
-            g.setColor(paper);
-            g.fillRoundRect(62, 104, w - 124, h - 180, 36, 36);
+            Graphics2D g2 = (Graphics2D) g;
+            g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                    RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+            g2.drawImage(image, x, y, drawW, drawH, null);
+        }
+    }
 
-            // 위아래 종이 테두리
-            for (int x = 85; x < w - 75; x += 34) {
-                g.fillOval(x - 18, 87, 45, 45);
-                g.fillOval(x - 18, h - 106, 45, 45);
-            }
+    // 공책의 가로줄을 그리는 간단한 메모 영역
+    public static class DiaryArea extends JTextArea {
+        private Color lineColor = new Color(210, 205, 195);
 
-            // 좌우 종이 테두리
-            for (int y = 130; y < h - 104; y += 34) {
-                g.fillOval(44, y - 20, 47, 47);
-                g.fillOval(w - 91, y - 20, 47, 47);
-            }
-
-            // 리본
-            g.setColor(ribbon);
-
-            g.fillOval(w / 2 - 55, 12, 54, 39);
-            g.fillOval(w / 2 + 1, 12, 54, 39);
-            g.fillOval(w / 2 - 11, 24, 22, 23);
-
-            g.fillPolygon(
-                    new int[]{w/2-5, w/2-27, w/2-7},
-                    new int[]{43, 70, 63}, 3
-            );
-
-            g.fillPolygon(
-                    new int[]{w/2+5, w/2+27, w/2+7},
-                    new int[]{43, 70, 63}, 3
-            );
-
-            g.setColor(new Color(255, 235, 142));
-            g.fillOval(w/2-6, 28, 12, 12);
-
-            // 크리스마스 전구 줄
-            g.setColor(Color.WHITE);
-            g.setStroke(new BasicStroke(2f));
-
-            g.draw(new QuadCurve2D.Double(
-                    w * .25, 80,
-                    w * .5, 117,
-                    w * .75, 80
-            ));
-
-            Color[] lights = {
-                    new Color(249, 184, 193),
-                    new Color(255, 233, 149),
-                    new Color(244, 186, 202),
-                    new Color(255, 230, 145),
-                    new Color(249, 184, 193)
-            };
-
-            for (int i = 0; i < lights.length; i++) {
-
-                g.setColor(lights[i]);
-
-                g.fillOval(
-                        (int)(w * (.30 + i * .10)) - 8,
-                        85 + (2 - Math.abs(2 - i)) * 7,
-                        16, 16
-                );
-            }
-
-            // 토끼 캐릭터
-            bunny(g, 51, 64, new Color(252, 190, 199));
-            bunny(g, w-51, 64, new Color(245, 187, 193));
-            bunny(g, 51, h-68, new Color(212, 182, 157));
-            bunny(g, w-51, h-68, new Color(249, 187, 208));
-
-            // 작은 별 장식
-            g.setColor(new Color(255, 239, 170));
-
-            int[][] stars = {
-                    {104, 30},
-                    {w-104, 31},
-                    {29, h/2},
-                    {w-30, h/2},
-                    {w/2, h-35}
-            };
-
-            for (int[] p : stars) {
-                g.fillOval(p[0]-5, p[1]-5, 10, 10);
-            }
-
-            // 눈 장식
-            g.setColor(Color.WHITE);
-
-            int[][] snow = {
-                    {29, 115},
-                    {w-28, 155},
-                    {31, h-145},
-                    {w-31, h-148}
-            };
-
-            for (int[] p : snow) {
-                g.fillOval(p[0], p[1], 6, 6);
-            }
-
-            g.dispose();
+        public void setLineColor(Color color) {
+            lineColor = color;
+            repaint();
         }
 
-        // =========================
-        // 토끼 캐릭터
-        // =========================
-        private void bunny(Graphics2D g, int x, int y,
-                           Color coat) {
-
-            Graphics2D b = (Graphics2D) g.create();
-
-            b.translate(x, y);
-            b.scale(.75, .75);
-
-            // 귀
-            b.setColor(new Color(255, 253, 249));
-            b.fillOval(-29, -57, 23, 50);
-            b.fillOval(6, -57, 23, 50);
-
-            // 귀 안쪽
-            b.setColor(new Color(250, 205, 215));
-            b.fillOval(-23, -48, 10, 31);
-            b.fillOval(12, -48, 10, 31);
-
-            // 옷
-            b.setColor(coat);
-            b.fillOval(-33, 15, 66, 40);
-
-            // 얼굴
-            b.setColor(new Color(255, 253, 249));
-            b.fillOval(-38, -27, 76, 69);
-
-            // 눈
-            b.setColor(new Color(93, 90, 89));
-            b.fillOval(-18, 4, 5, 5);
-            b.fillOval(13, 4, 5, 5);
-
-            // 볼
-            b.setColor(new Color(251, 192, 201));
-            b.fillOval(-28, 13, 14, 9);
-            b.fillOval(14, 13, 14, 9);
-
-            // 코
-            b.setColor(new Color(204, 135, 146));
-            b.fillOval(-3, 16, 6, 5);
-
-            b.dispose();
+        @Override
+        protected void paintComponent(Graphics g) {
+            g.setColor(lineColor);
+            int lineHeight = getFontMetrics(getFont()).getHeight();
+            int y = getInsets().top + lineHeight + 2;
+            while (y < getHeight()) {
+                g.drawLine(12, y, getWidth() - 12, y);
+                y = y + lineHeight;
+            }
+            super.paintComponent(g);
         }
     }
 }
