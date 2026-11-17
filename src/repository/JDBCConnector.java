@@ -1,8 +1,5 @@
-package jdbc;
+package repository;
 
-import ai0825.SortArray;
-
-import java.lang.module.Configuration;
 import java.sql.*;
 
 public class JDBCConnector {
